@@ -824,4 +824,12 @@ sub StoreHints {
 
 } # End of StoreAlertStatus
 
+sub CYCLE_TIME {
+  my $t = 300;
+  eval {
+    $t = $NfConf::CYCLETIME;
+  };
+  return $t;
+}
+
 1;

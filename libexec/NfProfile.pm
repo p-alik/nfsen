@@ -490,11 +490,12 @@ sub ReadRRDStatInfo {
 		return ($statinfo, $err);
 	}
 
+  my $cycle_time = NfSen::CYCLE_TIME();
 	foreach my $line (@$data) {
 		my $i = 0;
 		foreach my $val (@$line) {
 			if ( defined $val ) {
-				$$statinfo{$$names[$i++]} += int(300 * $val);
+				$$statinfo{$$names[$i++]} += int($cycle_time * $val);
 			}
 		}
 	}
@@ -549,8 +550,9 @@ sub GetPeakValues {
 		}
 	}
 
+  my $cycle_time = NfSen::CYCLE_TIME();
 	my $err = undef;
-	for ( my $t=$tmin; $t<=$tmax; $t += 300 ) {
+	for ( my $t=$tmin; $t<=$tmax; $t += $cycle_time ) {
 		$sum_pos = 0;
 		$sum_neg = 0;
 		my $subdirs = NfSen::SubdirHierarchy($t);
@@ -897,8 +899,9 @@ sub ProfileHistory {
 		}
 	}
 
+  my $cycle_time = NfSen::CYCLE_TIME();
 	# we have to process that many time slices:
-	my $numslices = ((( $tend - $tstart ) / 300 ) + 1 );
+	my $numslices = ((( $tend - $tstart ) / $cycle_time) + 1 );
 	
 	$$profileref{'status'} = 'built 0';
 	$$profileref{'locked'} = 1;
@@ -980,7 +983,7 @@ sub ProfileHistory {
 				$profile_size +=(stat($outfile))[7];
 			}
 		}
-		$t += 300;
+		$t += $cycle_time;
 		if ( $continous_profile && $t == $tend ) {
 			my %liveprofile = ReadProfile('live', '.');
 			$tend = $liveprofile{'tend'};
@@ -1085,9 +1088,10 @@ sub AddChannel {
 	$$profileref{'channel'}{$channel}{'order'}  	= $order;
 	$$profileref{'channel'}{$channel}{'sourcelist'} = $sourcelist;
 
+	my $cycle_time = NfSen::CYCLE_TIME();
 	# $tstart is the first value we need in the RRD DB, therefore specify 
-	# $tstart - 300 ( 1 slot )
-	NfSenRRD::SetupRRD("$NfConf::PROFILESTATDIR/$profilepath", $channel, $tstart - 300, 1);
+	# $tstart - NfSen::CYCLE_TIME ( 1 slot )
+	NfSenRRD::SetupRRD("$NfConf::PROFILESTATDIR/$profilepath", $channel, $tstart - $cycle_time, 1);
 	if ( defined $Log::ERROR ) {
 		rmdir "$NfConf::PROFILEDATADIR/$profilepath/$channel",
 		unlink $filter;
@@ -1205,6 +1209,7 @@ sub DoRebuild {
 	my $profilesize = 0;
 	my $tstart		= 0;
 	my $tend		= 0;
+	my $cycle_time = NfSen::CYCLE_TIME();
 	my $args = "-Y -p -r $NfConf::PROFILEDATADIR/$profilepath";
 	if ( open NFEXPIRE, "$NfConf::PREFIX/nfexpire $args 2>&1 |" ) {
 		local $SIG{PIPE} = sub { syslog('err', "Pipe broke for nfexpire"); };
@@ -1305,17 +1310,17 @@ sub DoRebuild {
 
 		syslog('info', "Setting up RRD DBs");
 		foreach my $channel ( @CHAN ) {
-			NfSenRRD::SetupRRD("$NfConf::PROFILESTATDIR/$profilepath", $channel, $tstart - 300, 1);
+			NfSenRRD::SetupRRD("$NfConf::PROFILESTATDIR/$profilepath", $channel, $tstart - $cycle_time, 1);
 		}
 
-		my $numslices = ((( $tend - $tstart ) / 300 ) + 1 );
+		my $numslices = ((( $tend - $tstart ) / $cycle_time ) + 1 );
 		my $percent  = $numslices / 100;
 		my $counter  = 0;
 		my $progress = 0;
 		my $modulo	 = int ($percent * 10) < 2 ? 2 : int ($percent * 10);
 
 		my $t;
-		for ( $t = $tstart; $t <= $tend; $t += 300 ) {
+		for ( $t = $tstart; $t <= $tend; $t += $cycle_time ) {
 			my $t_iso 	= NfSen::UNIX2ISO($t);
 			foreach my $channel ( @CHAN ) {
 				my $subdirs = NfSen::SubdirHierarchy($t);
@@ -1416,7 +1421,7 @@ sub DoRebuild {
 				$$profileinfo{'tend'} 	 = $t;
 				$$profileinfo{'size'} 	 = $profile_size;
 
-				$t += 300;
+				$t += $cycle_time;
 				%liveprofile = ReadProfile('live', '.');
 				$tend = $liveprofile{'tend'};
 			}
@@ -1832,8 +1837,9 @@ sub AddProfile {
 	$profileinfo{'tstart'} 		= $tstart;
 	$profileinfo{'tend'} 		= $tend;
 
-	# the first slot to be updated is 'updated' + 300
-	$profileinfo{'updated'}		= $tstart - 300;	
+	my $cycle_time = NfSen::CYCLE_TIME();
+	# the first slot to be updated is 'updated' + NfSen::CYCLE_TIME()
+	$profileinfo{'updated'}		= $tstart - $cycle_time;
 
 	# expiring profiles makes only sense for continous profiles
 	$profileinfo{'expire'} 		= $continuous_profile ? $lifetime : 0;
@@ -2387,7 +2393,8 @@ sub CommitProfile {
 	}
 
 	my $now	= time();
-	$now -= $now % 300;
+	my $cycle_time = NfSen::CYCLE_TIME();
+	$now -= $now % $cycle_time;
 
 	if ( $profileinfo{'status'} eq 'stalled' ) {
 		$profileinfo{'tstart'} 	= $now;
@@ -2600,6 +2607,7 @@ print $socket ".new_type=$new_type\n";
 			return;
 		}
 
+    my $cycle_time = NfSen::CYCLE_TIME();
 		my %liveprofile = ReadProfile('live', '.');
 		if ( $liveprofile{'status'} eq 'empty' ) {
 			# Could not read profile
@@ -2639,7 +2647,7 @@ print $socket ".Adjust cont profile tstart to live profile tstart $liveprofile{'
 print $socket ".New type is real\n";	
 				if ( $new_type == 2 ) {
 					my $now = time();
-					$profileinfo{'tstart'} = $now - ( $now % 300 );
+					$profileinfo{'tstart'} = $now - ( $now % $cycle_time );
 				} else {
 					print $socket $EODATA;
 					print $socket "ERR Can not convert to history profile - no data available\n";	

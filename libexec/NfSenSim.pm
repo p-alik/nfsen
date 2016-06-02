@@ -44,6 +44,7 @@ use NfAlert;
 sub ResetNfSen {
 
 	my $tstart = NfSen::ISO2UNIX($NfConf::sim{'tstart'});
+  my $cycle_time = $NfConf::CYCLETIME;
 	
 	print "Reset NfSen:\n";
 	if ( -f "$NfConf::PIDDIR/nfsend.pid" ) {
@@ -103,7 +104,7 @@ sub ResetNfSen {
 	$profileinfo{'tbegin'}		= $tstart;
 	$profileinfo{'tstart'} 		= $tstart;
 	$profileinfo{'tend'} 		= $tstart;
-	$profileinfo{'updated'}		= $tstart - 300;
+	$profileinfo{'updated'}		= $tstart - $cycle_time;
 	$profileinfo{'expire'} 		= 0;
 	$profileinfo{'maxsize'} 	= 0;
 	$profileinfo{'size'} 		= 0;
@@ -113,7 +114,7 @@ sub ResetNfSen {
 	$profileinfo{'status'} 		= 'OK';
 
 	foreach my $db ( keys %NfConf::sources ) {
-		NfSenRRD::SetupRRD("$NfConf::PROFILESTATDIR/live", $db, $tstart - 300, 1);
+		NfSenRRD::SetupRRD("$NfConf::PROFILESTATDIR/live", $db, $tstart - $cycle_time, 1);
 	}
 	if ( $Log::ERROR ) {
 		die "Error setup RRD DBs: $Log::ERROR\n";
@@ -123,7 +124,7 @@ sub ResetNfSen {
 		print "Preset profile 'live'\n";
 		my $tbegin = NfSen::ISO2UNIX($NfConf::sim{'tbegin'});
 		foreach my $channel ( NfProfile::ProfileChannels(\%profileinfo) ) {
-			for ( my $t = $tstart; $t <= $tbegin; $t += 300 ) {
+			for ( my $t = $tstart; $t <= $tbegin; $t += $cycle_time ) {
 				my $t_iso 	= NfSen::UNIX2ISO($t);
 				my $subdirs = NfSen::SubdirHierarchy($t);
 				my ($statinfo, $exit_code, $err ) = NfProfile::ReadStatInfo(\%profileinfo, $channel, $subdirs, $t_iso, undef);
@@ -148,10 +149,10 @@ sub ResetNfSen {
 			}
 		}
 		$profileinfo{'tend'}	= $tbegin;
-		$profileinfo{'updated'}	= $tbegin - 300;
-		NfSenRRD::UpdateGraphs('live', '.', $tbegin - 300, 1);
+		$profileinfo{'updated'}	= $tbegin - $cycle_time;
+		NfSenRRD::UpdateGraphs('live', '.', $tbegin - $cycle_time, 1);
 	} else {
-		NfSenRRD::UpdateGraphs('live', '.', $tstart - 300, 1);
+		NfSenRRD::UpdateGraphs('live', '.', $tstart - $cycle_time, 1);
 	}
 
 	NfProfile::WriteProfile(\%profileinfo);

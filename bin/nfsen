@@ -65,6 +65,7 @@ my $nfsen_version = "1.3.6p1";
 
 our $child_exit = 0;
 my $unit = 'nfsen';
+my $cycle_time = 300;
 
 sub usage {
 	print "$0 command [parameters]
@@ -329,8 +330,8 @@ my %CMD_lookup = (
 	'modify-profile' 		=> { 'nfsend' => 1, 'run' => \&GenericListProfile, 'RunAsRoot'	=>	0, 'rc_command'	=> 0 }, 
 	'modify-channel' 		=> { 'nfsend' => 1, 'run' => \&GenericListProfile, 'RunAsRoot'	=>	0, 'rc_command'	=> 0 }, 
 
-	'rebuild-profile'		=> { 'nfsend' => 1, 'run' => \&GenericListProfile, 'RunAsRoot'	=>	0, 'rc_command'	=> 0, 'timeout' => 300 }, 
-	'expire-profile'		=> { 'nfsend' => 1, 'run' => \&GenericListProfile, 'RunAsRoot'	=>	0, 'rc_command'	=> 0, 'timeout' => 300 }, 
+	'rebuild-profile'		=> { 'nfsend' => 1, 'run' => \&GenericListProfile, 'RunAsRoot'	=>	0, 'rc_command'	=> 0, 'timeout' => $cycle_time }, 
+	'expire-profile'		=> { 'nfsend' => 1, 'run' => \&GenericListProfile, 'RunAsRoot'	=>	0, 'rc_command'	=> 0, 'timeout' => $cycle_time }, 
 	#
 	# Directly executed commands
 	'reconfig'		 => { 'nfsend' => 0, 'run'	=>	\&Nfsources::Reconfig,	   'RunAsRoot'	=>	1, 'rc_command'	=> 0 }, 
@@ -853,6 +854,9 @@ if ( exists $cmd_arg{'help'} ) {
 if ( !NfConf::LoadConfig() ) {
 	die "ERR $Log::ERROR\n";
 }
+
+$cycle_time = $NfConf::CYCLETIME;
+
 my $hints = NfSen::LoadHints();
 
 if ( $NfConf::SIMmode ) {

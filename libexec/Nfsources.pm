@@ -142,6 +142,7 @@ sub Reconfig {
 		return;
 	}
 
+  my $cycle_time = $NfConf::CYCLETIME;
 	# profile 'live' contains by definition all netflow sources currently in use.
 	my %profileinfo = NfProfile::ReadProfile('live', '.');
 	if ( $profileinfo{'status'} eq 'empty' ) {
@@ -231,7 +232,7 @@ sub Reconfig {
 	if ( scalar @AddSourceList > 0 ) {
 		# Add sources
 		my $now = time();
-		my $tstart = $now - ( $now % 300 );
+		my $tstart = $now - ( $now % $cycle_time);
 		foreach my $source ( @AddSourceList ) {
 			print "Add source '$source'";
 			my $ret = NfProfile::AddChannel(\%profileinfo, $source, '+', 0, $NfConf::sources{$source}{'col'}, $source, []);

@@ -1,4 +1,4 @@
-#!%%PERL%% -w
+#!/usr/bin/perl -w
 #
 #  Copyright (c) 2004, SWITCH - Teleinformatikdienste fuer Lehre und Forschung
 #  All rights reserved.
@@ -66,6 +66,9 @@ my $forever = 1;
 my $reload  = 0;
 
 my $unit = "nfsend";
+
+# default rotation interval
+my $cycle_time = 300;
 
 sub SetSignalHandlers {
 	$SIG{TERM} = sub { syslog('info', "$unit: Got SIGTERM"); $forever = 0; };
@@ -231,7 +234,7 @@ sub Periodic {
 
 	syslog('debug', "Run periodic at " . scalar localtime($timeslot));
 
-	$timeslot -= 300;
+	$timeslot -= $cycle_time;
 
 	my %profileinfo = NfProfile::ReadProfile('live', '.');
 	if ( $profileinfo{'updated'} >= $timeslot ) {
@@ -470,7 +473,7 @@ sub Periodic {
 	if ( $comm_pid && scalar @args > 0 ) {
 		my %out_list;
 		my $nfsend_socket;
-		my $timeout = 300;
+		my $timeout = $cycle_time;
 		if ( $nfsend_socket = Nfcomm::nfsend_connect($timeout) ) {
 			my $status = Nfcomm::nfsend_comm($nfsend_socket, 
 				'run-plugins', { 'plugins' => \@args }, \%out_list, { 'timeout' => $timeout } );
@@ -637,11 +640,12 @@ sub ExpireProfiles {
 } # End of ExpireProfiles
 
 sub LoopLive {
+    my $max_sleep = $cycle_time + 15;
 	do {
 		my $nfsend_socket;
 		
 		my $cycle_start = time();
-		$lastcycle = $cycle_start - ( $cycle_start % 300 );
+		$lastcycle = $cycle_start - ( $cycle_start % $cycle_time );
 	
 		Nfsync::semwait();
 		SignalPeriodic(1);
@@ -656,8 +660,8 @@ sub LoopLive {
 		# otherwise we are behind time schedule. continue updating the 
 		# profiles until we are on track and can sleep
 		my $cycle_end = time();
-		if ( ($cycle_end - $lastcycle) < 315 ) {
-			my $sleeptime = $lastcycle + 315 - $cycle_end;
+		if ( ($cycle_end - $lastcycle) < $max_sleep ) {
+			my $sleeptime = $lastcycle + $max_sleep - $cycle_end;
 			sleep $sleeptime if $forever;
 		} else {
 			syslog('warning',"Behind schedule");
@@ -671,14 +675,14 @@ sub LoopSim {
 	my $hints = shift;
 
 	my $tbegin 	  = exists $NfConf::sim{'tbegin'} ? $NfConf::sim{'tbegin'} : $NfConf::sim{'tstart'};
-	$lastcycle = exists $$$hints{'sim'}{'tbreak'} ? $$$hints{'sim'}{'tbreak'} : NfSen::ISO2UNIX($tbegin) - 300;
+	$lastcycle = exists $$$hints{'sim'}{'tbreak'} ? $$$hints{'sim'}{'tbreak'} : NfSen::ISO2UNIX($tbegin) - $cycle_time;
 	my $tend   	  = NfSen::ISO2UNIX($NfConf::sim{'tend'});
 	syslog('info',"Simulation starts at %s", scalar localtime $lastcycle );
 	do {
 		my $nfsend_socket;
 			
 		my $cycle_start = time();
-		$lastcycle += 300;
+		$lastcycle += $cycle_time;
 	
 		Nfsync::semwait();
 		Periodic($lastcycle);
@@ -722,6 +726,10 @@ sub LoopSim {
 
 if ( !NfConf::LoadConfig() ) {
 	die "$Log::ERROR\n";
+}
+
+if($NfConf::CYCLETIME) {
+    $cycle_time = $NfConf::CYCLETIME;
 }
 
 $NfConf::RRDoffset = NfSenRRD::GetRRDoffset();
