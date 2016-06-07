@@ -28,9 +28,9 @@
 #
 #  $Author: peter $
 #
-#  $Id: NfAlert.pm 35 2012-01-13 17:15:10Z peter $
+#  $Id: NfAlert.pm 69 2014-06-23 19:27:50Z peter $
 #
-#  $LastChangedRevision: 35 $
+#  $LastChangedRevision: 69 $
 
 package NfAlert;
 
@@ -609,12 +609,12 @@ sub EvalCondition {
 	my $a = $$what_val[$type];
 	my $b;
 	if ( $type > 2 ) {
-		# this is a per/s compare. take 300s per slot to generate average
+		# this is a per/s compare. take $NfConf::CYCLETIME per slot to generate average
 		if ( $type == 5 ) {
 			# convert bytes to bits
-			$b = 8 * $comp_types[$type-3][$comp_type]/300;
+			$b = 8 * $comp_types[$type-3][$comp_type]/$NfConf::CYCLETIME;
 		} else {
-			$b = $comp_types[$type-3][$comp_type]/300;
+			$b = $comp_types[$type-3][$comp_type]/$NfConf::CYCLETIME;
 		}
 	} else {
 		# this is an absolute compare
@@ -1020,11 +1020,11 @@ sub RunPeriodic {
 					$what_val[1] = $$alertstatus{'last'}{'packets'}->[0];
 					$what_val[2] = $$alertstatus{'last'}{'bytes'}->[0];
 					# update per/s statistic
-					# take 300s. this may vary from actual duration, which needs not to be exactly 300s
-					# but for now stay with 300s
-					$what_val[3] = $$alertstatus{'last'}{'flows'}->[0] / 300;
-					$what_val[4] = $$alertstatus{'last'}{'packets'}->[0] / 300;
-					$what_val[5] = 8 * $$alertstatus{'last'}{'bytes'}->[0] / 300;
+					# take $NfConf::CYCLETIME. this may vary from actual duration, which needs not to be exactly $NfConf::CYCLETIME
+					# but for now stay with $NfConf::CYCLETIME
+					$what_val[3] = $$alertstatus{'last'}{'flows'}->[0] / $NfConf::CYCLETIME;
+					$what_val[4] = $$alertstatus{'last'}{'packets'}->[0] / $NfConf::CYCLETIME;
+					$what_val[5] = 8 * $$alertstatus{'last'}{'bytes'}->[0] / $NfConf::CYCLETIME;
 					#if ( $$alertstatus{'duration'}[0] != 0 ) {
 						#$what_val[3] = $$alertstatus{'last'}{'flows'}->[0] / ($$alertstatus{'duration'}[0] / 1000);
 						#$what_val[4] = $$alertstatus{'last'}{'packets'}->[0] / ($$alertstatus{'duration'}[0] / 1000);
@@ -1608,7 +1608,7 @@ sub AddAlert {
 	
 	InitRunInfo($alert, $status eq 'enabled' ? 1 : 0);
 	foreach my $type ( 'flows', 'packets', 'bytes' ) {
-		NfSenRRD::SetupAlertRRD("$NfConf::PROFILESTATDIR/~$alert/", "avg-$type", $liveprofile{'tend'} - 300, \@DSlist);
+		NfSenRRD::SetupAlertRRD("$NfConf::PROFILESTATDIR/~$alert/", "avg-$type", $liveprofile{'tend'} - $NfConf::CYCLETIME, \@DSlist);
     	if ( defined $Log::ERROR ) {
 			print $socket $EODATA;
         	print $socket "ERR Creating alert RRD for '$alert' failed: $Log::ERROR\n";

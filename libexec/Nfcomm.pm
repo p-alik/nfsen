@@ -29,9 +29,9 @@
 #
 #  $Author: peter $
 #
-#  $Id: Nfcomm.pm 36 2012-01-14 10:13:53Z peter $
+#  $Id: Nfcomm.pm 69 2014-06-23 19:27:50Z peter $
 #
-#  $LastChangedRevision: 36 $
+#  $LastChangedRevision: 69 $
 package Nfcomm;
 
 use strict;
@@ -170,6 +170,7 @@ sub GetGlobals {
 	print $socket "_globals=\$FRONTEND_PLUGINDIR = \"$NfConf::FRONTEND_PLUGINDIR\";\n";
 	print $socket "_globals=\$RRDoffset = \"$NfConf::RRDoffset\";\n";
 
+	print $socket "_globals=\$CYCLETIME = \"$NfConf::CYCLETIME\";\n";
 	print $socket "_globals=\$Refresh = \"$NfConf::Refresh\";\n";
 	print $socket "_globals=\$GMToffset = $GMToffset;\n";
 	print $socket "_globals=\$TZname = \"$TZname\";\n";
@@ -1090,7 +1091,9 @@ sub RunServer {
 	my $timeout = 10;
 	my $silent  = 0;
 	my $alarm = 0;
+	my $SIGpipe = 0;
 	$SIG{ALRM} = sub { $alarm = 1; };
+	$SIG{PIPE} = sub { $SIGpipe = 1 };
 	while ( !$done ) {
 		$paddr = accept(Client,$server);
 		if ( !$paddr ) {
@@ -1127,6 +1130,7 @@ sub RunServer {
 				eval {
 					local $SIG{'__DIE__'} = 'DEFAULT';
 					local $SIG{ALRM} = sub { die "Timeout reading from socket!"; };
+					local $SIG{PIPE} = sub { die "Broken PIPE while reading"; };
 					my $done = 0;
 				
 					# read multi line command and args
@@ -1220,7 +1224,8 @@ sub nfsend_connect {
 
 	eval {
 		local $SIG{'__DIE__'} = 'DEFAULT';
-		local $SIG{ALRM} = sub { die; };
+		local $SIG{ALRM} = sub { die "Timeout nfsend_connect"; };
+		local $SIG{PIPE} = sub { die "Signal PIPE nfsend_connect"; };
 
 		alarm 30;
 		my $greeting = <$nfsen_sock>;
@@ -1308,7 +1313,8 @@ sub nfsend_comm {
 	my $status = '';
 	eval {
 		local $SIG{'__DIE__'} = 'DEFAULT';
-		local $SIG{ALRM} = sub { die; };
+		local $SIG{ALRM} = sub { die "Timeout on socket"; };
+		local $SIG{PIPE} = sub { die "Broken Pipe"; };
 
 		# send command and options
 # print "Send: $command\n";
@@ -1333,6 +1339,11 @@ sub nfsend_comm {
 			# Debug output from nfsend
 			if ( $line =~ /^\..+/ ) {
 				print "DEBUG: $line" if $PRINT_DEBUG;
+				if ( defined $comm_opts && defined $$comm_opts{'info'} && $line =~ /^\.info /) {
+					$line =~ s/\.info //;	# cut header
+					$line =~ s/\n//;		# cut potential EOL
+					print "Info: $line\n";
+				}
 				next;
 			}
 

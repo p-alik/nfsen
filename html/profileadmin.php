@@ -627,13 +627,14 @@ Ex. 72, 72h, 4d 12h, 14days etc.', this, event, '200px')"><IMG SRC="icons/help.p
 function NewProfileDialog ($new_profile) {
 
 	global $self;
+	global $CYCLETIME;
 
 	$liveprofile = ReadProfile('./live');
 	$sources = array_keys($liveprofile['channel']); 
 
 	$live_start  = UNIX2DISPLAY($liveprofile['tstart']);
 	$tnow		 = time();
-	$tnow		-= $tnow % 300;
+	$tnow		-= $tnow % $CYCLETIME;
 	$tnow		 = UNIX2DISPLAY($tnow);
 
 	// prepare some values to display

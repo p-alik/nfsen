@@ -52,7 +52,13 @@ foreach ($_SESSION['rrdgraph_getparams'] as $getparam => $dummy ) {
 		$opts[$getparam] = $_GET[$getparam];
 	}
 }
-$arglist = explode(' ', urldecode($_GET['arg']));
+if ( array_key_exists('argref', $_GET) ) {
+	$ref = urldecode($_GET['argref']);
+ 	ReportLog("rrdgraph argref $ref found");
+	$arglist = explode(' ', $_SESSION[$ref]);
+} else {
+	$arglist = explode(' ', urldecode($_GET['arg']));
+}
 $opts['.silent'] = 1;
 foreach ( $arglist as $arg ) {
 	$opts['arg'][] = $arg;

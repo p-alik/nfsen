@@ -30,13 +30,13 @@
 #
 #  $Author: peter $
 #
-#  $Id: install.pl 53 2012-01-23 16:36:02Z peter $
+#  $Id: install.pl 69 2014-06-23 19:27:50Z peter $
 #
-#  $LastChangedRevision: 53 $
+#  $LastChangedRevision: 69 $
 #
-#  Last changed date:    $Date: 2012-01-23 17:36:02 +0100 (Mon, 23 Jan 2012) $
+#  Last changed date:    $Date: 2014-06-23 21:27:50 +0200 (Mon, 23 Jun 2014) $
 
-require 5.6.0;
+require v5.10.1;
 
 use lib "./installer-items";
 use lib "./libexec";
@@ -55,8 +55,8 @@ use File::Copy;
 use File::Path;
 use RRDconvertv1;
 
-my $VERSION = '$Id: install.pl 53 2012-01-23 16:36:02Z peter $';
-my $nfsen_version = "1.3.6p1";
+my $VERSION = '$Id: install.pl 69 2014-06-23 19:27:50Z peter $';
+my $nfsen_version = "1.3.7";
 
 my @ProfileTag = ( 
 	"# \n",
@@ -104,7 +104,7 @@ sub GetPerl {
 
 	while (1) {
 		if ( -x $whichperl ) {
-			my $err = system("$whichperl -e 'require 5.6.0;'") >> 8;
+			my $err = system("$whichperl -e 'require 5.10.1;'") >> 8;
 			last if $err == 0;
 			print "Found errors while testing Perl\n";
 		} else {
@@ -401,9 +401,9 @@ sub SetupEnv {
 	RenameFiles();
 
 	my $now = time();
-	my $tstart = $now - ( $now % 300 );
+	my $tstart = $now - ( $now % $NfConf::CYCLETIME );
 	foreach my $db ( keys %NfConf::sources ) {
-		NfSenRRD::SetupRRD("$NfConf::PROFILESTATDIR/live", $db, $tstart - 300, 0);
+		NfSenRRD::SetupRRD("$NfConf::PROFILESTATDIR/live", $db, $tstart - $NfConf::CYCLETIME, 0);
 	}
 	if ( $Log::ERROR ) {
 		die "Error setup RRD DBs: $Log::ERROR\n";
@@ -419,7 +419,7 @@ sub SetupEnv {
 		$profileinfo{'tbegin'}		= $tstart;
 		$profileinfo{'tstart'} 		= $tstart;
 		$profileinfo{'tend'} 		= $tstart;
-		$profileinfo{'updated'}		= $tstart - 300;
+		$profileinfo{'updated'}		= $tstart - $NfConf::CYCLETIME;
 		$profileinfo{'expire'} 		= 0;
 		$profileinfo{'maxsize'} 	= 0;
 		$profileinfo{'size'} 		= 0;
@@ -490,7 +490,7 @@ sub UpgradeProfiles {
 			# estimate create time of profile
 			my $tcreate = (stat("$NfConf::PROFILESTATDIR/$profilename"))[9];
 			$profileinfo{'tcreate'}	= $tcreate;
-			$profileinfo{'tbegin'}	= $tcreate - ( $tcreate % 300 );
+			$profileinfo{'tbegin'}	= $tcreate - ( $tcreate % $NfConf::CYCLETIME );
 
 			NfProfile::WriteProfile(\%profileinfo);
 		}
@@ -636,10 +636,11 @@ unshift @INC, "libexec";
 print "Check for required Perl modules: ";
 eval {
 	# other required modules
-	require RRDs; 			import RRDs;
-	require Mail::Header;	import Mail::Header;
-	require Mail::Internet;	import Mail::Internet;
-	require Socket6;		import Socket6;
+	use v5.10.1;
+	use RRDs;
+	use Mail::Header;
+	use Mail::Internet;
+	use Socket6 qw(inet_pton);
 };
 if ( $@ ) {
 	print "Failed\nRequired nfsen modules not found\n";
@@ -668,7 +669,7 @@ if ( !NfConf::LoadConfig($ConfigFile) ) {
 	exit 1;
 }
 
-# check for extra errornoous nfsen.conf file, which may overwrite existing files
+# check for extra errornous nfsen.conf file, which may overwrite existing files
 if ( -f "$NfConf::CONFDIR/nfsen.conf" && -f "etc/nfsen.conf" &&
 	( (stat($ConfigFile))[1] != (stat("etc/nfsen.conf"))[1] )) {
 	die "Extra nfsen.conf file in etc directory found. Remove errornous file first"
@@ -747,7 +748,7 @@ if ( -f "$NfConf::PIDDIR/$pid_name" ) {
 			print "Stop nfsend while upgrading .";
 			kill 15, $pid;
 			my $cnt = 0;
-			while ( -f "$NfConf::PIDDIR/$pid_name" && $cnt < 300 ) {
+			while ( -f "$NfConf::PIDDIR/$pid_name" && $cnt < $NfConf::CYCLETIME ) {
 				print ".";
 				$cnt++;
 				sleep(1);

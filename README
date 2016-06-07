@@ -1,12 +1,9 @@
 Quick Notes:
 ============
 
-This is version 1.3.6p1 of NfSen. At least nfdump 1.6.x,
-or later is required! Do not use any earlier nfdump version.
+This is version 1.3.7 of NfSen. Use least nfdump 1.6.x,
+Do not use any earlier nfdump version, such as nfdump 1.5.x
 Make sure you have nfdump configured with option --enable-nfprofile
-
-If this is a new install and you want to have PortTracker installed
-you need at least nfdump-1.6.5.
 
 Upgrade is supported only for NfSen versions v1.2.x. 
 older NfSen versions need to be upgraded in a first step to NfSen 1.2.4.
@@ -39,7 +36,7 @@ Installation:
 1. Prerequisites:
 - PHP and Perl:
   NfSen is written in PHP and Perl and should run on any *NIX system.
-  At least Perl 5.6.0 and PHP > 4.1 with PHP socket extension is required.
+  At least Perl 5.10.1 and PHP > 4.1 with PHP socket extension is required.
   NfSen also works with PHP 5 and apache 2.
   Perl modules: Mail::Header and Mail::Internet. Install these Perl modules
   prior to installing NfSen.

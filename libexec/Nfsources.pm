@@ -29,9 +29,9 @@
 #
 #  $Author: peter $
 #
-#  $Id: Nfsources.pm 27 2011-12-29 12:53:29Z peter $
+#  $Id: Nfsources.pm 69 2014-06-23 19:27:50Z peter $
 #
-#  $LastChangedRevision: 27 $
+#  $LastChangedRevision: 69 $
 
 package Nfsources;
 
@@ -231,7 +231,7 @@ sub Reconfig {
 	if ( scalar @AddSourceList > 0 ) {
 		# Add sources
 		my $now = time();
-		my $tstart = $now - ( $now % 300 );
+		my $tstart = $now - ( $now % $NfConf::CYCLETIME );
 		foreach my $source ( @AddSourceList ) {
 			print "Add source '$source'";
 			my $ret = NfProfile::AddChannel(\%profileinfo, $source, '+', 0, $NfConf::sources{$source}{'col'}, $source, []);

@@ -426,10 +426,10 @@ function UpdateStat() {
 	document.getElementById("cursor_mode").value = CursorMode;
 
 	var tleft = document.getElementById("box_tleft").unixtime;
-	document.getElementById("tleft").value = tleft - ( tleft % 300 );
+	document.getElementById("tleft").value = tleft - ( tleft % CYCLETIME );
 
 	var tright = document.getElementById("box_tright").unixtime;
-	document.getElementById("tright").value = tright - ( tright % 300 );
+	document.getElementById("tright").value = tright - ( tright % CYCLETIME );
 
 	document.getElementById('slotselectform').submit();
 } // End of UpdateStat

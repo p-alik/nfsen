@@ -29,9 +29,9 @@
 #
 #  $Author: peter $
 #
-#  $Id: Lookup.pm 46 2012-01-18 19:39:33Z peter $
+#  $Id: Lookup.pm 61 2014-04-03 09:33:20Z peter $
 #
-#  $LastChangedRevision: 46 $
+#  $LastChangedRevision: 61 $
 
 package Lookup;
 
@@ -40,7 +40,6 @@ use warnings;
 use Socket;
 use IO::Socket::INET;
 use Socket;
-use Socket6;
 use AbuseWhois;
 use Log;
 

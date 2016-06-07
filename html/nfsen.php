@@ -39,10 +39,10 @@
 // The very first function to call
 session_start();
 
-$expected_version = "1.3.6p1";
+$expected_version = "1.3.7";
 
 // Session check
-if ( !array_key_exists('backend_version', $_SESSION ) || $_SESSION['backend_version'] !=  $expected_version ) {
+if ( array_key_exists('backend_version', $_SESSION ) && $_SESSION['backend_version'] !=  $expected_version ) {
 	session_destroy();
 	session_start();
 	$_SESSION['version'] = $expected_version;
@@ -74,6 +74,7 @@ function SendHeader ($established) {
 
 	global $self;
 	global $TabList;
+	global $CYCLETIME;
 
 	header("Content-type: text/html; charset=ISO-8859-1");
 ?>
@@ -117,6 +118,10 @@ function SendHeader ($established) {
 	</script>
 	<script language="Javascript" src="js/menu.js" type="text/javascript">
 	</script>
+	<script language="Javascript" type="text/javascript">
+		var CYCLETIME  = <?php echo $CYCLETIME;?>;
+	</script>
+
 </head>
 
 <body>

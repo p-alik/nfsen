@@ -29,9 +29,9 @@
 #
 #  $Author: peter $
 #
-#  $Id: PortTracker.pm 27 2011-12-29 12:53:29Z peter $
+#  $Id: PortTracker.pm 59 2013-08-09 14:01:13Z peter $
 #
-#  $LastChangedRevision: 27 $
+#  $LastChangedRevision: 59 $
 
 # Demo plugin for NfSen
 #
@@ -63,14 +63,13 @@ my $PORTSDBDIR = "/data/ports-db";
 my $EODATA  = ".\n";
 
 # colours used in graphs
-# if more than 12 graphs are drawn ( does this really make sense ? ) 
 # the same colours are used again
 my @colour = ( 
-	'#ff0000', '#ff8000', '#ffff00', '#80ff00', '#00ff00',
-	'#00ff80', '#00ffff', '#0080ff', '#0000ff', '#8000ff',
-	'#ff00ff', '#ff0080'
+	'#ff2b00', '#ffaa00', '#aaff00', '#00ffaa', '#00d5ff', '#0055ff', '#ff00ff', '#ff0080', 
+	'#ff5500', '#ffd500', '#2aff00', '#00ffd4', '#00aaff', '#002aff', '#ff00d4', '#ff0055', 
+	'#ff8000', '#ffff00', '#00ff80', '#00ffff', '#007fff', '#8000ff', '#ff00aa', '#ff002b'
 );
-
+my $NumColour = scalar @colour;
 
 sub GetTopN {
     my $socket  = shift;
@@ -203,17 +202,17 @@ sub GetPortGraph {
 	push @rrdargs, "COMMENT:Top $n Ports\\n";
 	if ( $stacked && scalar @topN ) {
 		my $port = shift @topN;
-		push @rrdargs, "AREA:Port${port}$colour[$i]:Port ${port}";
+		push @rrdargs, "AREA:Port${port}$colour[$i % $NumColour]:Port ${port}";
 		$i++;
 		$area_set = 1;
 		foreach my $port ( @topN ) {
-	 		push @rrdargs, "STACK:Port${port}$colour[$i]:Port ${port}";
+	 		push @rrdargs, "STACK:Port${port}$colour[$i % $NumColour]:Port ${port}";
 	 		$i++;
 		}
 
 	} else {
 		foreach my $port ( @topN ) {
-			push @rrdargs, "LINE1:Port${port}$colour[$i]:Port ${port}";
+			push @rrdargs, "LINE1:Port${port}$colour[$i % $NumColour]:Port ${port}";
 			$i++;
 		}
 	}
@@ -226,17 +225,17 @@ sub GetPortGraph {
 	if ( $stacked && scalar @track_list) {
 		if ( !$area_set ) {
 			my $port = shift @track_list;
-			push @rrdargs, "AREA:Port${port}$colour[$i]:Port ${port}";
+			push @rrdargs, "AREA:Port${port}$colour[$i % $NumColour]:Port ${port}";
 			$i++;
 		}
 		foreach my $port ( @track_list ) {
-			push @rrdargs, "STACK:Port${port}$colour[$i]:Port ${port}";
+			push @rrdargs, "STACK:Port${port}$colour[$i % $NumColour]:Port ${port}";
 			$i++;
 		}
 		
 	} else {
 		foreach my $port ( @track_list ) {
-			push @rrdargs, "LINE2:Port${port}$colour[$i]:Port ${port}";
+			push @rrdargs, "LINE2:Port${port}$colour[$i % $NumColour]:Port ${port}";
 			$i++;
 		}
 	}

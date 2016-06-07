@@ -29,9 +29,9 @@
 #
 #  $Author: peter $
 #
-#  $Id: AbuseWhois.pm 35 2012-01-13 17:15:10Z peter $
+#  $Id: AbuseWhois.pm 62 2014-04-07 17:22:03Z peter $
 #
-#  $LastChangedRevision: 35 $
+#  $LastChangedRevision: 62 $
 
 
 package AbuseWhois;
@@ -39,7 +39,7 @@ package AbuseWhois;
 use strict;
 use warnings;
 use Socket;
-use Socket6;
+use Socket6 qw(inet_pton);
 use Sys::Syslog; 
 use IO::Socket::INET;
 use Log;

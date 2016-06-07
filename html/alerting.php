@@ -600,6 +600,7 @@ function DisplayActionTable($alert, $readonly) {
 function DisplayEventTable($alert, $readonly) {
 	global $self;
 	global $num_ConditionList;
+	global $CYCLETIME;
 
 	$controls_display_style = $readonly ? "" : "style='display:none'";
 	$updated = $alert['updated_str'];
@@ -663,7 +664,7 @@ function DisplayEventTable($alert, $readonly) {
 			<tr>
 <?php
 			foreach ( $vec as $val ) {
-				$val = ScaleValue($val, 300);
+				$val = ScaleValue($val, $CYCLETIME);
 				print "<td style='text-align:right'>$val</td>\n";
 			}
 ?>
@@ -685,7 +686,7 @@ function DisplayEventTable($alert, $readonly) {
 			<tr>
 <?php
 			foreach ( $vec as $val ) {
-				$val = ScaleValue($val, 300);
+				$val = ScaleValue($val, $CYCLETIME);
 				print "<td style='text-align:right'>$val</td>\n";
 			}
 ?>
@@ -707,7 +708,7 @@ function DisplayEventTable($alert, $readonly) {
 			<tr>
 <?php
 			foreach ( $vec as $val ) {
-				$val = ScaleBytes($val, 300, 1000.0);
+				$val = ScaleBytes($val, $CYCLETIME, 1000.0);
 				print "<td style='text-align:right'>$val</td>\n";
 			}
 ?>

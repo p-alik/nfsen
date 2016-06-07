@@ -28,9 +28,9 @@
 #
 #  $Author: peter $
 #
-#  $Id: NfSenSim.pm 27 2011-12-29 12:53:29Z peter $
+#  $Id: NfSenSim.pm 69 2014-06-23 19:27:50Z peter $
 #
-#  $LastChangedRevision: 27 $
+#  $LastChangedRevision: 69 $
 
 
 package NfSenSim;
@@ -103,7 +103,7 @@ sub ResetNfSen {
 	$profileinfo{'tbegin'}		= $tstart;
 	$profileinfo{'tstart'} 		= $tstart;
 	$profileinfo{'tend'} 		= $tstart;
-	$profileinfo{'updated'}		= $tstart - 300;
+	$profileinfo{'updated'}		= $tstart - $NfConf::CYCLETIME;
 	$profileinfo{'expire'} 		= 0;
 	$profileinfo{'maxsize'} 	= 0;
 	$profileinfo{'size'} 		= 0;
@@ -113,7 +113,7 @@ sub ResetNfSen {
 	$profileinfo{'status'} 		= 'OK';
 
 	foreach my $db ( keys %NfConf::sources ) {
-		NfSenRRD::SetupRRD("$NfConf::PROFILESTATDIR/live", $db, $tstart - 300, 1);
+		NfSenRRD::SetupRRD("$NfConf::PROFILESTATDIR/live", $db, $tstart - $NfConf::CYCLETIME, 1);
 	}
 	if ( $Log::ERROR ) {
 		die "Error setup RRD DBs: $Log::ERROR\n";
@@ -123,12 +123,12 @@ sub ResetNfSen {
 		print "Preset profile 'live'\n";
 		my $tbegin = NfSen::ISO2UNIX($NfConf::sim{'tbegin'});
 		foreach my $channel ( NfProfile::ProfileChannels(\%profileinfo) ) {
-			for ( my $t = $tstart; $t <= $tbegin; $t += 300 ) {
+			for ( my $t = $tstart; $t <= $tbegin; $t += $NfConf::CYCLETIME ) {
 				my $t_iso 	= NfSen::UNIX2ISO($t);
 				my $subdirs = NfSen::SubdirHierarchy($t);
 				my ($statinfo, $exit_code, $err ) = NfProfile::ReadStatInfo(\%profileinfo, $channel, $subdirs, $t_iso, undef);
 				if ( $exit_code != 0 ) {
-					die $err;
+					warn "$t_iso: $err";
 					next;
 				}
 	
@@ -148,10 +148,10 @@ sub ResetNfSen {
 			}
 		}
 		$profileinfo{'tend'}	= $tbegin;
-		$profileinfo{'updated'}	= $tbegin - 300;
-		NfSenRRD::UpdateGraphs('live', '.', $tbegin - 300, 1);
+		$profileinfo{'updated'}	= $tbegin - $NfConf::CYCLETIME;
+		NfSenRRD::UpdateGraphs('live', '.', $tbegin - $NfConf::CYCLETIME, 1);
 	} else {
-		NfSenRRD::UpdateGraphs('live', '.', $tstart - 300, 1);
+		NfSenRRD::UpdateGraphs('live', '.', $tstart - $NfConf::CYCLETIME, 1);
 	}
 
 	NfProfile::WriteProfile(\%profileinfo);
@@ -161,4 +161,22 @@ sub ResetNfSen {
 
 } # End of ResetNfSen
 
+sub NewSlots {
+	my $timeslot = shift;
+
+	my $t_iso = NfSen::UNIX2ISO($timeslot);
+	my %profileinfo = NfProfile::ReadProfile('live', '.');
+
+	my $failed = 0;
+	foreach my $channel ( NfProfile::ProfileChannels(\%profileinfo) ) {
+		my $subdirs = NfSen::SubdirHierarchy($timeslot);
+		my ($statinfo, $exit_code, $err ) = NfProfile::ReadStatInfo(\%profileinfo, $channel, $subdirs, $t_iso, undef);
+		if ( $exit_code != 0 ) {
+			$failed = 1;
+			next;
+		}
+	}
+	return $failed ? 0 : 1;
+
+} # End of NewSlots
 1;

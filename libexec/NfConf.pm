@@ -29,9 +29,9 @@
 #
 #  $Author: peter $
 #
-#  $Id: NfConf.pm 37 2012-01-14 11:28:25Z peter $
+#  $Id: NfConf.pm 69 2014-06-23 19:27:50Z peter $
 #
-#  $LastChangedRevision: 37 $
+#  $LastChangedRevision: 69 $
 
 package NfConf;
 
@@ -75,6 +75,7 @@ our $DEBUG;
 our $AllowsSystemCMD;
 our $SIMmode;
 our $Refresh;
+our $PERL_HAS_MEMLEAK;
 our $BACKEND_PLUGINDIR;
 our $PICDIR;
 our $NFPROFILEOPTS;
@@ -136,7 +137,7 @@ sub LoadConfig {
 	$syslog_facility = 'local3';
 	$RRDoffset	 	 = 0;
 	$SIMmode		 = 0;
-	$Refresh		 = 300;
+	$Refresh		 = $CYCLETIME;
 	$AllowsSystemCMD = 0;
 	$PICDIR			 = undef;
 	$FILTERDIR		 = undef;
@@ -152,6 +153,8 @@ sub LoadConfig {
 
 	$NFPROFILEOPTS	 = '';
 	$NFEXPIREOPTS	 = '';
+
+	$PERL_HAS_MEMLEAK = 0;
 
 	my $log_type 	= $^V =~ /5.10/ ? 'native' : 'unix';
 

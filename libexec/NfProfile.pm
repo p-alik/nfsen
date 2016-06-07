@@ -28,9 +28,9 @@
 #
 #  $Author: peter $
 #
-#  $Id: NfProfile.pm 35 2012-01-13 17:15:10Z peter $
+#  $Id: NfProfile.pm 69 2014-06-23 19:27:50Z peter $
 #
-#  $LastChangedRevision: 35 $
+#  $LastChangedRevision: 69 $
 
 package NfProfile;
 
@@ -484,7 +484,7 @@ sub ReadRRDStatInfo {
 	my $profilepath = ProfilePath($name, $profilegroup);
 
 	my $RRDdb = "$NfConf::PROFILESTATDIR/$profilepath/$channel.rrd";
-	my ($start,$step,$names,$data) = RRDs::fetch $RRDdb, "-s", $tstart, "-e", $tend, "MAX";
+	my ($start,$step,$names,$data) = RRDs::fetch $RRDdb, "-s", $tstart-300, "-e", $tend-300, "MAX";
 	my $err=RRDs::error;
 	if ( defined $err ) {
 		return ($statinfo, $err);
@@ -494,7 +494,7 @@ sub ReadRRDStatInfo {
 		my $i = 0;
 		foreach my $val (@$line) {
 			if ( defined $val ) {
-				$$statinfo{$$names[$i++]} += int(300 * $val);
+				$$statinfo{$$names[$i++]} += int($NfConf::CYCLETIME * $val);
 			}
 		}
 	}
@@ -550,7 +550,7 @@ sub GetPeakValues {
 	}
 
 	my $err = undef;
-	for ( my $t=$tmin; $t<=$tmax; $t += 300 ) {
+	for ( my $t=$tmin; $t<=$tmax; $t += $NfConf::CYCLETIME ) {
 		$sum_pos = 0;
 		$sum_neg = 0;
 		my $subdirs = NfSen::SubdirHierarchy($t);
@@ -898,7 +898,7 @@ sub ProfileHistory {
 	}
 
 	# we have to process that many time slices:
-	my $numslices = ((( $tend - $tstart ) / 300 ) + 1 );
+	my $numslices = ((( $tend - $tstart ) / $NfConf::CYCLETIME ) + 1 );
 	
 	$$profileref{'status'} = 'built 0';
 	$$profileref{'locked'} = 1;
@@ -915,7 +915,8 @@ sub ProfileHistory {
 
 	my $profilepath = ProfilePath($name, $group);
 	my $subdirlayout = $NfConf::SUBDIRLAYOUT ? "-S $NfConf::SUBDIRLAYOUT" : "";
-	my $arg = "-I -p $NfConf::PROFILEDATADIR -P $NfConf::PROFILESTATDIR $subdirlayout $NfConf::ZIPprofiles";
+	my $arg = "-I -p $NfConf::PROFILEDATADIR -P $NfConf::PROFILESTATDIR $subdirlayout ";
+	$arg   .= "-z " if $NfConf::ZIPprofiles;
 
 	# create argument list specific for each channel
 	# at the moment this contains of all channels in a continues profile
@@ -980,7 +981,7 @@ sub ProfileHistory {
 				$profile_size +=(stat($outfile))[7];
 			}
 		}
-		$t += 300;
+		$t += $NfConf::CYCLETIME;
 		if ( $continous_profile && $t == $tend ) {
 			my %liveprofile = ReadProfile('live', '.');
 			$tend = $liveprofile{'tend'};
@@ -1086,8 +1087,8 @@ sub AddChannel {
 	$$profileref{'channel'}{$channel}{'sourcelist'} = $sourcelist;
 
 	# $tstart is the first value we need in the RRD DB, therefore specify 
-	# $tstart - 300 ( 1 slot )
-	NfSenRRD::SetupRRD("$NfConf::PROFILESTATDIR/$profilepath", $channel, $tstart - 300, 1);
+	# $tstart - $NfConf::CYCLETIME ( 1 slot )
+	NfSenRRD::SetupRRD("$NfConf::PROFILESTATDIR/$profilepath", $channel, $tstart - $NfConf::CYCLETIME, 1);
 	if ( defined $Log::ERROR ) {
 		rmdir "$NfConf::PROFILEDATADIR/$profilepath/$channel",
 		unlink $filter;
@@ -1186,6 +1187,7 @@ sub GetProfilegroups {
 } # End of GetProfilegroups
 
 sub DoRebuild {
+	my $socket		 = shift;
 	my $profileinfo  = shift;
 	my $profile 	 = shift;
 	my $profilegroup = shift;
@@ -1305,17 +1307,17 @@ sub DoRebuild {
 
 		syslog('info', "Setting up RRD DBs");
 		foreach my $channel ( @CHAN ) {
-			NfSenRRD::SetupRRD("$NfConf::PROFILESTATDIR/$profilepath", $channel, $tstart - 300, 1);
+			NfSenRRD::SetupRRD("$NfConf::PROFILESTATDIR/$profilepath", $channel, $tstart - $NfConf::CYCLETIME, 1);
 		}
 
-		my $numslices = ((( $tend - $tstart ) / 300 ) + 1 );
+		my $numslices = ((( $tend - $tstart ) / $NfConf::CYCLETIME ) + 1 );
 		my $percent  = $numslices / 100;
 		my $counter  = 0;
 		my $progress = 0;
 		my $modulo	 = int ($percent * 10) < 2 ? 2 : int ($percent * 10);
 
 		my $t;
-		for ( $t = $tstart; $t <= $tend; $t += 300 ) {
+		for ( $t = $tstart; $t <= $tend; $t += $NfConf::CYCLETIME ) {
 			my $t_iso 	= NfSen::UNIX2ISO($t);
 			foreach my $channel ( @CHAN ) {
 				my $subdirs = NfSen::SubdirHierarchy($t);
@@ -1341,7 +1343,8 @@ sub DoRebuild {
 				$completed = 100;
 			}
 			if ( ($counter % $modulo ) == 0 ) {
-				syslog('info', "Rebuilding Profile '$profile':	 Completed: $completed\%");
+				print $socket ".info Rebuilding Profile '$profile': Completed: $completed\%\n";
+				syslog('info', "Rebuilding Profile '$profile': Completed: $completed\%");
 			}
 
 
@@ -1369,7 +1372,8 @@ sub DoRebuild {
 			}
 			my $channellist = join ':', keys %{$liveprofile{'channel'}};
 			my $subdirlayout = $NfConf::SUBDIRLAYOUT ? "-S $NfConf::SUBDIRLAYOUT" : "";
-			my $arg = "-I -p $NfConf::PROFILEDATADIR -P $NfConf::PROFILESTATDIR $subdirlayout $NfConf::ZIPprofiles";
+			my $arg = "-I -p $NfConf::PROFILEDATADIR -P $NfConf::PROFILESTATDIR $subdirlayout ";
+			$arg   .= "-z " if $NfConf::ZIPprofiles;
 
 			# profile missing slots
 			if ( $t <= $tend ) {
@@ -1416,7 +1420,7 @@ sub DoRebuild {
 				$$profileinfo{'tend'} 	 = $t;
 				$$profileinfo{'size'} 	 = $profile_size;
 
-				$t += 300;
+				$t += $NfConf::CYCLETIME;
 				%liveprofile = ReadProfile('live', '.');
 				$tend = $liveprofile{'tend'};
 			}
@@ -1832,8 +1836,8 @@ sub AddProfile {
 	$profileinfo{'tstart'} 		= $tstart;
 	$profileinfo{'tend'} 		= $tend;
 
-	# the first slot to be updated is 'updated' + 300
-	$profileinfo{'updated'}		= $tstart - 300;	
+	# the first slot to be updated is 'updated' + $NfConf::CYCLETIME
+	$profileinfo{'updated'}		= $tstart - $NfConf::CYCLETIME;	
 
 	# expiring profiles makes only sense for continous profiles
 	$profileinfo{'expire'} 		= $continuous_profile ? $lifetime : 0;
@@ -2387,7 +2391,7 @@ sub CommitProfile {
 	}
 
 	my $now	= time();
-	$now -= $now % 300;
+	$now -= $now % $NfConf::CYCLETIME;
 
 	if ( $profileinfo{'status'} eq 'stalled' ) {
 		$profileinfo{'tstart'} 	= $now;
@@ -2639,7 +2643,7 @@ print $socket ".Adjust cont profile tstart to live profile tstart $liveprofile{'
 print $socket ".New type is real\n";	
 				if ( $new_type == 2 ) {
 					my $now = time();
-					$profileinfo{'tstart'} = $now - ( $now % 300 );
+					$profileinfo{'tstart'} = $now - ( $now % $NfConf::CYCLETIME );
 				} else {
 					print $socket $EODATA;
 					print $socket "ERR Can not convert to history profile - no data available\n";	
@@ -2940,7 +2944,7 @@ sub RebuildProfile {
 		
 	syslog('info', "Start to rebuild profile '$profile'");
 
-	my $status = DoRebuild(\%profileinfo, $profile, $profilegroup, $profilepath, 0, $RebuildGraphs);
+	my $status = DoRebuild($socket, \%profileinfo, $profile, $profilegroup, $profilepath, 0, $RebuildGraphs);
 
 	if ( !WriteProfile(\%profileinfo) ) {
 		syslog('err', "Error writing profile '$profile': $Log::ERROR");

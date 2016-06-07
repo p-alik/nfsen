@@ -29,9 +29,9 @@
 #
 #  $Author: peter $
 #
-#  $Id: NfSenRRD.pm 40 2012-01-15 14:12:15Z peter $
+#  $Id: NfSenRRD.pm 68 2014-04-23 16:03:05Z peter $
 #
-#  $LastChangedRevision: 40 $
+#  $LastChangedRevision: 68 $
 
 package NfSenRRD;
 
@@ -110,22 +110,22 @@ sub SetupRRD {
 	} 
 	
 	# RRD DB layout:
-	#   1 x 5min =  5 min samples	 30 * 288 ( per day ) = 8640 => 30 days
-	#   6 x 5min = 30 min samples 	 30 *  48 ( per day ) = 1440 => 30 days	
-	#  24 x 5min =  2 hour samples 	 30 *  12 ( per day ) = 360  => 30 days
+	#   1 x 5min =  5 min samples	 60 * 288 ( per day ) = 17280 => 60 days
+	#   6 x 5min = 30 min samples 	 60 *  48 ( per day ) =  2880 => 60 days	
+	#  24 x 5min =  2 hour samples 	 60 *  12 ( per day ) =  720  => 60 days
 	# 288 x 5min =	1 day samples	700 *   1 ( per day ) = 700  => 700 days
 	# Total data available 790 days
 	my $old_umask = umask 0002;
 	my $rrd_filename = "$path/$db.rrd";
 	RRDs::create ( $rrd_filename, "--start", $start,
 		@DS,
-		"RRA:AVERAGE:0.5:1:8640",
-		"RRA:AVERAGE:0.5:6:1440",
-		"RRA:AVERAGE:0.5:24:360",
+		"RRA:AVERAGE:0.5:1:17280",
+		"RRA:AVERAGE:0.5:6:2880",
+		"RRA:AVERAGE:0.5:24:720",
 		"RRA:AVERAGE:0.5:288:700",
-		"RRA:MAX:0.5:1:8640",
-		"RRA:MAX:0.5:6:1440",
-		"RRA:MAX:0.5:24:360",
+		"RRA:MAX:0.5:1:17280",
+		"RRA:MAX:0.5:6:2880",
+		"RRA:MAX:0.5:24:720",
 		"RRA:MAX:0.5:288:700"
 	);
 	umask $old_umask;

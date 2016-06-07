@@ -29,9 +29,9 @@
 #
 #  $Author: peter $
 #
-#  $Id: NfSenRC.pm 45 2012-01-16 19:38:43Z peter $
+#  $Id: NfSenRC.pm 69 2014-06-23 19:27:50Z peter $
 #
-#  $LastChangedRevision: 45 $
+#  $LastChangedRevision: 69 $
 
 package NfSenRC;
 
@@ -44,6 +44,7 @@ use Log;
 our %CollectorMap = ( 
 	'netflow'	=> 'nfcapd',
 	'sflow'		=> 'sfcapd',
+	'pcap'		=> 'nfpcapd',
 );
 
 sub StartCollector {
@@ -274,7 +275,7 @@ sub NfSen_stop {
 			unlink "$NfConf::PIDDIR/nfsend.pid";
 		} else {
 			kill 'TERM', $pid || warn "Can't signal nfsend: $! ";
-			my $timeout = 300;
+			my $timeout = $NfConf::CYCLETIME;
 			while ( $timeout && -f "$NfConf::PIDDIR/nfsend.pid") {
 				print ".";
 				sleep 1;

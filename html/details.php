@@ -10,10 +10,10 @@ $TypeOrder	  = array ( 'flows', 'packets', 'traffic');
 
 
 /* 
- * scale factor: Number of 5min slices per pixel
+ * scale factor: Number of  (cycletime) min slices per pixel
  * graph with 576 pixel
- * 0.25 * 576 * 300 = 43200 => 12 hours
- * 0.5  * 576 * 300 = 86400 => 1 day
+ * 0.25 * 576 * $CYCLETIME = 43200 => 12 hours if CYCLETIME = 300
+ * 0.5  * 576 * $CYCLETIME = 86400 => 1 day if CYCLETIME = 300
  * $scale * 172800 = time range of graph
  */
 $WinSizeScale  = array ( 0.25, 0.5, 1, 2, 3.5, 7, 15, 30, 90, 120, 183 );
@@ -50,9 +50,9 @@ $IPStatArg	  = array ( '-s record',
 						'-s srctos', '-s dsttos', '-s tos',	 
 						'-s mask',   '-s srcmask','-s dstmask',
 						'-s vlan',   '-s srcvlan','-s dstvlan',
-						'-s srcmac', '-d dstmac', '-s inmac', '-s outmac',
+						'-s srcmac', '-s dstmac', '-s inmac', '-s outmac',
 						'-s insrcmac',   '-s outdstmac','-s indstmac', '-s outsrcmac',
-						'-s mapls1', '-s mapls2', '-s mapls3', '-s mapls4', '-s mapls5', '-s mapls6', '-s mapls7', '-s mapls8', '-s mapls9', '-s mapls10',
+						'-s mpls1', '-s mpls2', '-s mpls3', '-s mpls4', '-s mpls5', '-s mpls6', '-s mpls7', '-s mpls8', '-s mpls9', '-s mpls10',
 					);
 
 $IPStatOrder  = array ( 'flows', 'packets', 'bytes', 'pps', 'bps', 'bpp' );
@@ -65,6 +65,7 @@ function TimeSlotUpdate ($detail_opts) {
 
 	global $WinSizeScale;
 	global $RRDoffset;
+	global $CYCLETIME;
 
 	if ( isset($_POST['tend']) ) {
 		$_SESSION['tend'] = $_POST['tend'];
@@ -100,15 +101,15 @@ function TimeSlotUpdate ($detail_opts) {
 		$_tmp = $_POST['adjust'];
 		switch($_tmp) {
 			case " > ":
-				if ( ($_SESSION['tright'] + 300 ) <= $_SESSION['profileinfo']['tend']) {
-					$_SESSION['tleft']  += 300;	// increase one 5 min slice
-					$_SESSION['tright'] += 300;	// increase one 5 min slice
+				if ( ($_SESSION['tright'] + $CYCLETIME ) <= $_SESSION['profileinfo']['tend']) {
+					$_SESSION['tleft']  += $CYCLETIME;	// increase one $CYCLETIME slice ( default 300 )
+					$_SESSION['tright'] += $CYCLETIME;	// increase one $CYCLETIME slice ( default 300 )
 				} 
 				break;
 			case " < ":
-				if ( ($_SESSION['tleft'] - 300 ) >= $_SESSION['profileinfo']['tstart']) {
-					$_SESSION['tleft']  -= 300;	// decrease one 5 min slice
-					$_SESSION['tright'] -= 300;	// decrease one 5 min slice
+				if ( ($_SESSION['tleft'] - $CYCLETIME ) >= $_SESSION['profileinfo']['tstart']) {
+					$_SESSION['tleft']  -= $CYCLETIME;	// decrease one $CYCLETIME slice ( default 300 )
+					$_SESSION['tright'] -= $CYCLETIME;	// decrease one $CYCLETIME slice ( default 300 )
 				} 
 				break;
 			case " << ":
@@ -152,7 +153,7 @@ function TimeSlotUpdate ($detail_opts) {
 				// center tleft, if possible, otherwise move as much as we can
 				$_tmp = ($full_range - ( $_SESSION['tright'] - $_SESSION['tleft']) ) >>1;
 				// shift only multiple of 5min units
-				$_tmp -= $_tmp % 300;
+				$_tmp -= $_tmp % $CYCLETIME;
 				$_SESSION['tend'] = min($_SESSION['tright'] + $_tmp, $_SESSION['profileinfo']['tend']);
 				$_SESSION['tstart'] = $_SESSION['tend'] - $full_range;
 				break;
@@ -173,7 +174,7 @@ function TimeSlotUpdate ($detail_opts) {
 		$_tmp = $_POST['tleft'];
 		if ( is_numeric($_tmp) ) {
 			// make sure we fall at the beginning of a 5min slot
-			$_SESSION['tleft'] = $_tmp - ($_tmp % 300);
+			$_SESSION['tleft'] = $_tmp - ($_tmp % $CYCLETIME);
 
 			// if tleft is outside the profile, set tleft to end of profile
 			if ( ($_SESSION['tleft'] < $_SESSION['tstart'])  || 
@@ -191,9 +192,9 @@ function TimeSlotUpdate ($detail_opts) {
 		$_tmp = $_POST['tright'];
 		if ( is_numeric($_tmp) ) {
 			// make sure we fall at the beginning of a 5min slot
-			$_SESSION['tright'] = $_tmp - ( $_tmp % 300);
+			$_SESSION['tright'] = $_tmp - ( $_tmp % $CYCLETIME);
 
-			// if tright is outside the profile, reset tright to tleft + 300
+			// if tright is outside the profile, reset tright to tleft + $CYCLETIME
 			if ( ($_SESSION['tright'] < $_SESSION['tstart'])  || 
 				 ($_SESSION['tright'] > $_SESSION['tend'])) {
 				$_SESSION['tright']	= $_SESSION['tleft'];
@@ -216,8 +217,8 @@ function TimeSlotUpdate ($detail_opts) {
 	*/
 	$margin = 8640 * $scale;	// 10% of graph
 	$offset = ($full_range - ( $_SESSION['tright'] - $_SESSION['tleft']) ) >>1;
-	// shift only multiple of 5min units
-	$offset -= $offset % 300;
+	// shift only multiple of cycletime units ( default 300 )
+	$offset -= $offset % $CYCLETIME;
 	if ((($_SESSION['tright'] > ($_SESSION['tend'] - $margin)) ||
 		 ($_SESSION['tleft'] < ($_SESSION['tstart'] + $margin))) && 
 		(($_SESSION['tright'] + $offset) < $_SESSION['profileinfo']['tend']) ) {
@@ -757,6 +758,7 @@ function DisplayDetails () {
 	global $RRDoffset;
 	global $GMToffset;
 	global $TZname;
+	global $CYCLETIME;
 
 ?>
     <script language="Javascript" src="js/detail.js" type="text/javascript">
@@ -802,10 +804,11 @@ function DisplayDetails () {
 			$detail_opts['type'], $_SESSION['profileinfo']['tstart'], $_SESSION['tstart'], 
 			$_SESSION['tend'], $_SESSION['tleft'], $_SESSION['tright'], 288, 100, 1, 
 			$detail_opts['logscale'], $detail_opts['linegraph']));
-		$arg = urlencode($arg);
+		$_SESSION["rrd_proto_arg_$i"] = $arg;
+
 		print "<a href='$self?proto=$label'> " .  
 			"<img src=rrdgraph.php?cmd=get-detailsgraph&profile=" . $_SESSION['profileswitch'] . 
-				"&arg=$arg border='0' width='165' height='81' alt='$label'></a>\n";
+				"&argref=rrd_proto_arg_" . $i . " border='0' width='165' height='81' alt='$label'></a>\n";
 		print "</td>\n";
 	}
 	print "<td style='vertical-align: bottom;'>\n";
@@ -859,13 +862,13 @@ function DisplayDetails () {
 			$detail_opts['proto'], $detail_opts['type'], $_SESSION['profileinfo']['tstart'], 
 			$_SESSION['tstart'], $_SESSION['tend'], $_SESSION['tleft'], $_SESSION['tright'], 
 			576, 200, 0, $detail_opts['logscale'], $detail_opts['linegraph']));
-	$arg = urlencode($arg);
+	$_SESSION['rrd_arg_main'] = $arg;
 
 ?>
 	</tr>
 	<tr>
 		<td colspan='4' align="left"   valign="top">
-			<img id='MainGraph' style='position:relative; top:0px; left:0px;' onclick="DragCursor.set(event);" src=rrdgraph.php?cmd=get-detailsgraph&profile=<?php echo $_SESSION['profileswitch']; ?>&arg=<?php echo $arg?> border='0' alt='main-graph'>
+			<img id='MainGraph' style='position:relative; top:0px; left:0px;' onclick="DragCursor.set(event);" src=rrdgraph.php?cmd=get-detailsgraph&profile=<?php echo $_SESSION['profileswitch']; ?>&argref=rrd_arg_main border='0' alt='main-graph'>
 			<img id="CursorDragHandle" style="position:absolute;display:none; " src="icons/cursor-line.png" alt="Line Cursor">
 			<img id="StartDragHandle" 	style="position:absolute;display:none" src="icons/cursor-start.png" alt="Start Cursor">
 			<div id="StartLine" style="position: absolute;display:none; width: 1px; height: 200px; background-color: black;"></div>
@@ -915,9 +918,10 @@ function DisplayDetails () {
 				$detail_opts['proto'], $label, $_SESSION['profileinfo']['tstart'], 
 				$_SESSION['tstart'], $_SESSION['tend'], $_SESSION['tleft'], 
 				$_SESSION['tright'], 288, 100, 1, $detail_opts['logscale'], $detail_opts['linegraph']));
-		$arg = urlencode($arg);
+		$_SESSION["rrd_arg_$i"] = $arg;
+
 		print "<a href='$self?type=$label'> " .  "<img src=rrdgraph.php?cmd=get-detailsgraph&profile=" . 
-			$_SESSION['profileswitch'] .  "&arg=$arg border='0' width='165' height='81' alt='$label'></a>";
+			$_SESSION['profileswitch'] .  "&argref=rrd_arg_" . $i . " border='0' width='165' height='81' alt='$label'></a>";
 		print "</td></tr>\n";
 	}
 
@@ -1131,7 +1135,7 @@ function DisplayDetails () {
 
 		$rateval = 1;
 		if ( $detail_opts['ratescale'] == 1 ) {
-			$rateval = $_SESSION['tright'] - $_SESSION['tleft'] + 300;
+			$rateval = $_SESSION['tright'] - $_SESSION['tleft'] + $CYCLETIME;
 		}
 
 		$bgcolour = "bgcolor='" . $_SESSION['profileinfo']['channel'][$channel]['colour'] . "'";
