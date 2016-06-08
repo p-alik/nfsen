@@ -137,7 +137,7 @@ sub LoadConfig {
 	$syslog_facility = 'local3';
 	$RRDoffset	 	 = 0;
 	$SIMmode		 = 0;
-	$Refresh		 = $CYCLETIME;
+	$Refresh		 = undef;
 	$AllowsSystemCMD = 0;
 	$PICDIR			 = undef;
 	$FILTERDIR		 = undef;
@@ -228,8 +228,26 @@ sub LoadConfig {
 	}
 	$GID = $gid;
 
+  # minimal cycle time
+  my ($min, $max) = (60, 300);
 
-	$Log::ERROR = undef ;
+	if ($CYCLETIME !~/^\d+$/) {
+			$Log::ERROR =  "CYCLETIME=$CYCLETIME is not an integer";
+			return undef;
+	}
+	if ($CYCLETIME < $min) {
+			$Log::ERROR =  "nfcapd does not support rotation interval < $min";
+			return undef;
+	}
+
+	if ($CYCLETIME > $max) {
+			$Log::ERROR =  "CYCLETIME value should be an integer between $min and $max";
+			return undef;
+	}
+
+	$Refresh = $CYCLETIME;
+
+	$Log::ERROR = undef;
 	return 1;
 
 } # End of LoadConfig

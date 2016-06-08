@@ -86,6 +86,7 @@ sub StartCollector {
 	my $subdirlayout = $NfConf::SUBDIRLAYOUT ? "-S $NfConf::SUBDIRLAYOUT" : "";
 	my $pidfile	 	= "$NfConf::PIDDIR/p${port}.pid";
 	my $extensions  = $NfConf::EXTENSIONS ? $NfConf::EXTENSIONS : "";
+	my $rotate      = join ' ', "-t",  $NfConf::CYCLETIME;
 
 	my $pid = CollectorStatus($port);
 	if ( $pid > 0 ) {
@@ -94,7 +95,7 @@ sub StartCollector {
 	}
 
 	my $ziparg = $NfConf::ZIPcollected ? '-z' : '';
-	my $common_args = "-w -D -p $port -u $uid -g $gid $buffer_opts $subdirlayout -P $pidfile $ziparg $extensions";
+	my $common_args = "-w -D -p $port -u $uid -g $gid $buffer_opts $subdirlayout -P $pidfile $ziparg $extensions $rotate";
 	my $src_args;
 	my $optargs = '';
 	if ( scalar @SourceList > 1 ) {

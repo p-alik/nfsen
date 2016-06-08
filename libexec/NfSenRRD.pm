@@ -118,6 +118,7 @@ sub SetupRRD {
 	my $old_umask = umask 0002;
 	my $rrd_filename = "$path/$db.rrd";
 	RRDs::create ( $rrd_filename, "--start", $start,
+        "--step",  $NfConf::CYCLETIME,
 		@DS,
 		"RRA:AVERAGE:0.5:1:17280",
 		"RRA:AVERAGE:0.5:6:2880",

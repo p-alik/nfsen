@@ -935,7 +935,6 @@ sub ExecuteAction {
 
 sub RunPeriodic {
 	my $t_iso = shift;
-
 	my $t_unix = NfSen::ISO2UNIX($t_iso);
 
 	foreach my $alertname ( NfAlert::AlertList() ) {
