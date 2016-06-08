@@ -1187,14 +1187,12 @@ sub GetProfilegroups {
 } # End of GetProfilegroups
 
 sub DoRebuild {
-	my $socket		 = shift;
 	my $profileinfo  = shift;
 	my $profile 	 = shift;
 	my $profilegroup = shift;
 	my $profilepath  = shift;
 	my $installer	 = shift;
 	my $DoGraphs	 = shift;
-
 	# rebuilding live is a bit trickier to keep everything consistent
 	# make sure, the periodic update process is done - then block cycles
 	syslog('info', "Rebuilding profile '$profile', group '$profilegroup'");
@@ -1343,7 +1341,6 @@ sub DoRebuild {
 				$completed = 100;
 			}
 			if ( ($counter % $modulo ) == 0 ) {
-				print $socket ".info Rebuilding Profile '$profile': Completed: $completed\%\n";
 				syslog('info', "Rebuilding Profile '$profile': Completed: $completed\%");
 			}
 
@@ -2944,7 +2941,7 @@ sub RebuildProfile {
 		
 	syslog('info', "Start to rebuild profile '$profile'");
 
-	my $status = DoRebuild($socket, \%profileinfo, $profile, $profilegroup, $profilepath, 0, $RebuildGraphs);
+	my $status = DoRebuild(\%profileinfo, $profile, $profilegroup, $profilepath, 0, $RebuildGraphs);
 
 	if ( !WriteProfile(\%profileinfo) ) {
 		syslog('err', "Error writing profile '$profile': $Log::ERROR");
