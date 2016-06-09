@@ -94,11 +94,7 @@ sub SetupRRD {
 	my $force	= shift;
 
 	$Log::ERROR = undef;
-	my @DS;
-	foreach my $ds ( @RRD_DS ) {
-		push @DS, "DS:$ds:ABSOLUTE:600:U:U";
-	}
-
+	my @DS = NfSenRRD::_ds_absolute(@RRD_DS);
 	my $ERR;
 
 	# Create the RRD DB only if it not exists, or we are forced
@@ -155,11 +151,7 @@ sub SetupAlertRRD {
 	my $dsref	= shift;
 	
 	$Log::ERROR = undef;
-	my @DS;
-	foreach my $ds ( @$dsref ) {
-		push @DS, "DS:$ds:ABSOLUTE:600:U:U";
-	}
-
+	my @DS = NfSenRRD::_ds_absolute(@$dsref);
 	my $ERR;
 
 	# RRD DB layout:
@@ -610,3 +602,13 @@ sub GenAlertGraph {
 	}
 
 } # End of GenAlertGraph
+
+sub _ds_absolute {
+  my @DS = ();
+  my $hb = eval {$NfConf::RRD_ABSOLUTE_HEARTBEAT} || 600;
+  foreach my $ds ( @_ ) {
+    push @DS, "DS:$ds:ABSOLUTE:$hb:U:U";
+  }
+  return @DS;
+}
+
