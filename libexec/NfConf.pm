@@ -92,7 +92,7 @@ our $GID;
 our $LogSocket;
 
 our $CYCLETIME;
-
+our $RRD_ABSOLUTE_HEARTBEAT;
 #
 # Loads the config from nfsen.conf file
 # returns 1 on success. 
@@ -155,6 +155,7 @@ sub LoadConfig {
 	$NFEXPIREOPTS	 = '';
 
 	$PERL_HAS_MEMLEAK = 0;
+  $RRD_ABSOLUTE_HEARTBEAT = 600;
 
 	my $log_type 	= $^V =~ /5.10/ ? 'native' : 'unix';
 
