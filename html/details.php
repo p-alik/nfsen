@@ -331,10 +331,13 @@ function Process_Details_tab ($tab_changed, $profile_changed) {
 	}
 
 	// to get the defaults in the parse_opts array
-	if ( $tab_changed || $profile_changed ) {
+	if ( $tab_changed ) {
 		unset($_SESSION['detail_opts']);
 		$detail_opts = array();
 	} else {
+		if ( $profile_changed ) {
+			unset($_SESSION['detail_opts']['channellist']);
+		}
 		$detail_opts = array_key_exists('detail_opts', $_SESSION) ?  $_SESSION['detail_opts'] : array();
 	}
 
@@ -425,7 +428,7 @@ function Process_Details_tab ($tab_changed, $profile_changed) {
 	$_COOKIE['statpref'] = $detail_opts['statpref'];
 	$_COOKIE['statvisible'] = $detail_opts['statvisible'];
 
-	if ( ( $tab_changed || $profile_changed) || 
+	if ( ( $tab_changed ) ||
 		(!isset($_SESSION['tend']) || !isset($_SESSION['tleft']) || !isset($_SESSION['tright']) )) {
 		$_SESSION['tend']	   = $_SESSION['profileinfo']['tend'];
 		if (($_SESSION['tend'] - 43200) < $_SESSION['profileinfo']['tstart'] )
@@ -441,6 +444,10 @@ function Process_Details_tab ($tab_changed, $profile_changed) {
 			DefaultFilters();
 
 		$_SESSION['process_form'] = array();
+	}
+
+	if ( $profile_changed ) {
+		unset($_SESSION['process_form']['srcselector']);
 	}
 
 	TimeSlotUpdate($detail_opts);
