@@ -96,7 +96,7 @@ sub SetupRRD {
 	$Log::ERROR = undef;
 	my @DS;
 	foreach my $ds ( @RRD_DS ) {
-		push @DS, "DS:$ds:ABSOLUTE:600:U:U";
+		push @DS, "DS:$ds:ABSOLUTE:@{[$NfConf::CYCLETIME*2]}:U:U";
 	}
 
 	my $ERR;
@@ -157,7 +157,7 @@ sub SetupAlertRRD {
 	$Log::ERROR = undef;
 	my @DS;
 	foreach my $ds ( @$dsref ) {
-		push @DS, "DS:$ds:ABSOLUTE:600:U:U";
+		push @DS, "DS:$ds:ABSOLUTE:@{[$NfConf::CYCLETIME*2]}:U:U";
 	}
 
 	my $ERR;
@@ -345,8 +345,8 @@ sub UpdateGraphs {
 			$title = "$graphs{$type}: " . scalar localtime ($tend-604800) . " - " . scalar localtime $tend;
 			$err = GenGraph($profile, $profilegroup, $graphs{$type}, $type, '-week', $title, $tend - 604800, $tend);
 			if ( $err ) {
-				warn "Error GenGraph: Profile: $profile, $type-day: $err";
-				$Log::ERROR = "Error GenGraph: Profile: $profile, $type-day: $err";
+				warn "Error GenGraph: Profile: $profile, $type-week: $err";
+				$Log::ERROR = "Error GenGraph: Profile: $profile, $type-week: $err";
 			}
 		}
 
@@ -355,8 +355,8 @@ sub UpdateGraphs {
 			$title = "$graphs{$type}: " . scalar localtime ($tend-2592000) . " - " . scalar localtime $tend;
 			$err = GenGraph($profile, $profilegroup, $graphs{$type}, $type, '-month', $title, $tend - 2592000, $tend);
 			if ( $err ) {
-				warn "Error GenGraph: Profile: $profile, $type-day: $err";
-				$Log::ERROR = "Error GenGraph: Profile: $profile, $type-day: $err";
+				warn "Error GenGraph: Profile: $profile, $type-month: $err";
+				$Log::ERROR = "Error GenGraph: Profile: $profile, $type-month: $err";
 			}
 		}
 
@@ -365,8 +365,8 @@ sub UpdateGraphs {
 			$title = "$graphs{$type}: " . scalar localtime ($tend-31536000) . " - " . scalar localtime $tend;
 			$err = GenGraph($profile, $profilegroup, $graphs{$type}, $type, '-year', $title, $tend - 31536000, $tend);
 			if ( $err ) {
-				warn "Error GenGraph: Profile: $profile, $type-day: $err";
-				$Log::ERROR = "Error GenGraph: Profile: $profile, $type-day: $err";
+				warn "Error GenGraph: Profile: $profile, $type-year: $err";
+				$Log::ERROR = "Error GenGraph: Profile: $profile, $type-year: $err";
 			}
 		}
 	}
