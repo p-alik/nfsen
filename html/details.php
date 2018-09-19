@@ -82,7 +82,7 @@ function TimeSlotUpdate ($detail_opts) {
 	 * The default for the graphs is 1 day => scale = 0.5
 	 */
 	$scale  = $WinSizeScale[$detail_opts['wsize']];
-	$full_range = $scale * 172800;  // a common product
+	$full_range = $scale * 576 * $CYCLETIME;  // a common product
 
 	/*
 	 * start of the graph
@@ -215,7 +215,7 @@ function TimeSlotUpdate ($detail_opts) {
 	* adjust the graph and move the tleft into the middle of
 	* the graph
 	*/
-	$margin = 8640 * $scale;	// 10% of graph
+	$margin = $full_range * 0.1;	// 10% of graph
 	$offset = ($full_range - ( $_SESSION['tright'] - $_SESSION['tleft']) ) >>1;
 	// shift only multiple of cycletime units ( default 300 )
 	$offset -= $offset % $CYCLETIME;
@@ -277,13 +277,10 @@ function Process_Details_tab ($tab_changed, $profile_changed) {
 	global $WinSizeScale;
 	global $LimitScale;
 	global $OutputFormatOption;
+	global $CYCLETIME;
 
 	$_SESSION['refresh'] = 0;
 	unset($_SESSION['run']);
-
-	if ( $profile_changed || $tab_changed) {
-		unset($_SESSION['detail_opts']);
-	}
 
 	// register 'get-detailsgraph' command for rrdgraph.php
 	if ( !array_key_exists('rrdgraph_cmds', $_SESSION) || 
@@ -431,13 +428,14 @@ function Process_Details_tab ($tab_changed, $profile_changed) {
 	if ( ( $tab_changed ) ||
 		(!isset($_SESSION['tend']) || !isset($_SESSION['tleft']) || !isset($_SESSION['tright']) )) {
 		$_SESSION['tend']	   = $_SESSION['profileinfo']['tend'];
-		if (($_SESSION['tend'] - 43200) < $_SESSION['profileinfo']['tstart'] )
+		$offset = $WinSizeScale[$detail_opts['wsize']] * 576 * $CYCLETIME / 2;
+		if (($_SESSION['tend'] - $offset) < $_SESSION['profileinfo']['tstart'] )
 			// the middle of the graph is outside the profile, so set the mark 
 			// to the beginning of the profile
 			$_SESSION['tleft']  = $_SESSION['profileinfo']['tstart'];	
 		else
 			// set the tleft to the middle of the graph
-			$_SESSION['tleft']  = $_SESSION['tend'] - 43200;
+			$_SESSION['tleft']  = $_SESSION['tend'] - $offset;
 		$_SESSION['tright'] = $_SESSION['tleft'];
 
 		if ( !array_key_exists('DefaultFilters', $_SESSION ) )

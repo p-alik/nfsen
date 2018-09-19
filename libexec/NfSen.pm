@@ -218,12 +218,6 @@ sub ISO2UNIX {
 	my ( $year, $mon, $mday, $hour, $min ) = $isotime =~ /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/;
 	$mon--;
 
-	# round down to nearest 5 min slot
-	my $diff = $min % 5;
-	if ( $diff ) {
-		$min -= $diff;
-	}
-
 	my $unixtime = Time::Local::timelocal($sec,$min,$hour,$mday,$mon,$year);
 
     return $unixtime;

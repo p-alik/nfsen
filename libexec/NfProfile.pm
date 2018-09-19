@@ -484,7 +484,7 @@ sub ReadRRDStatInfo {
 	my $profilepath = ProfilePath($name, $profilegroup);
 
 	my $RRDdb = "$NfConf::PROFILESTATDIR/$profilepath/$channel.rrd";
-	my ($start,$step,$names,$data) = RRDs::fetch $RRDdb, "-s", $tstart-300, "-e", $tend-300, "MAX";
+	my ($start,$step,$names,$data) = RRDs::fetch $RRDdb, "-s", $tstart-$NfConf::CYCLETIME, "-e", $tend-$NfConf::CYCLETIME, "MAX";
 	my $err=RRDs::error;
 	if ( defined $err ) {
 		return ($statinfo, $err);

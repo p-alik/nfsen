@@ -204,7 +204,7 @@ if ( !defined $NfConf::SUBDIRLAYOUT ) {
 my $hints = NfSen::LoadHints();
 
 my $t = time();
-my $subdirs = NfSen::SubdirHierarchy($t - ($t % $NfConf::CYCLETIME));
+my $subdirs = NfSen::SubdirHierarchy($t - ($t % 300));
 if ( !defined $subdirs ) {
 	die "Unknown sub hierarchy layout $NfConf::SUBDIRLAYOUT\n";
 }
