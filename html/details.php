@@ -659,11 +659,7 @@ function Process_Details_tab ($tab_changed, $profile_changed) {
 
 
 	if ( array_key_exists('fmt_save', $_POST) ) {
-		if (!get_magic_quotes_gpc()) {
-   			$cmd_opts['formatdef'] = addslashes($process_form['customfmt']);
-		} else {
-   			$cmd_opts['formatdef'] = $process_form['customfmt'];
-		}
+ 		$cmd_opts['formatdef'] = $process_form['customfmt'];
 		$cmd_opts['format'] = $process_form['fmt_save'];
 		$cmd_opts['overwrite'] = 1;
 		$cmd_out = nfsend_query("add-format", $cmd_opts, 0);

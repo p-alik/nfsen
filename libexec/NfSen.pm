@@ -29,9 +29,9 @@
 #
 #  $Author: peter $
 #
-#  $Id: NfSen.pm 28 2011-12-30 11:43:56Z peter $
+#  $Id: NfSen.pm 71 2017-01-19 16:16:21Z peter $
 #
-#  $LastChangedRevision: 28 $
+#  $LastChangedRevision: 71 $
 
 package NfSen;
 
@@ -300,7 +300,7 @@ sub DropPriv {
 	$( = $www_gid;
 	$) = "$www_gid $(";
 
-	$> = $nf_uid;
+	$> = $< = $nf_uid;
 
 	if( $> != $nf_uid ){
 		$Log::ERROR = "Couldn't become uid \"$nf_uid\"";

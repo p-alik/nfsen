@@ -29,9 +29,9 @@
 #
 #  $Author: peter $
 #
-#  $Id: NfSenRRD.pm 68 2014-04-23 16:03:05Z peter $
+#  $Id: NfSenRRD.pm 72 2017-01-22 13:04:08Z peter $
 #
-#  $LastChangedRevision: 68 $
+#  $LastChangedRevision: 72 $
 
 package NfSenRRD;
 
@@ -73,7 +73,7 @@ sub GetRRDoffset {
 	if ( $rrd_version < 1.1 ) { # it's RRD 1.0.x
 		$RRDoffset = 77;
 	}
-	if ( $rrd_version >= 1.2 && $rrd_version < 1.5 ) {
+	if ( $rrd_version >= 1.2 && $rrd_version < 1.6 ) {
 		$RRDoffset = 67;
 	}
 

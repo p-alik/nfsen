@@ -65,13 +65,15 @@ function CompileOutputFormat($process_form) {
 	}
 	if ( $format == 'auto') 
 		return "";
-	if ( $format == $formatdef ) 
+	if ( $format == $formatdef ) {
 		if ( $is_bidir )
 			return " -o bi$format";
 		else
 			return " -o $format";
-	else
-		return " -o 'fmt:$formatdef'";
+	} else {
+		$formatdef = escapeshellarg("fmt:$formatdef");
+		return " -o $formatdef";
+	}
 
 } // End of CompileOutputFormat
 

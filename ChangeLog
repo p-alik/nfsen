@@ -1,3 +1,7 @@
+2017-01-19
+- Fix Security Vulenrability - which may execute arbitrary commands from the web interface.
+- Support rrdtools 1.6
+
 2014-12-23
 - Fix various incompatibilities with newer php and Perl versions
 - Fix empty details graph, if too many channels or resources were selected.

@@ -29,9 +29,9 @@
 #
 #  $Author: peter $
 #
-#  $Id: Nfcomm.pm 69 2014-06-23 19:27:50Z peter $
+#  $Id: Nfcomm.pm 71 2017-01-19 16:16:21Z peter $
 #
-#  $LastChangedRevision: 69 $
+#  $LastChangedRevision: 71 $
 package Nfcomm;
 
 use strict;
@@ -259,11 +259,17 @@ sub RunNfdump {
     	$filter = join "\n", @_tmp;
 	}
 
-    if ( $filter =~ /[^\s!-~\n]+/ || $filter =~ /['"`;\\]/ ) {
+	if ( $filter =~ /[^\s!-~\n]+/ || $filter =~ /['"`;\\]/ ) {
 		print $socket $EODATA;
 		print $socket "ERR Illegal characters in filter\n";
 		return;
-    }
+	}
+
+	if ( $args =~ /[^\s!-~\n]+/ || $args =~ /['"`;\\]/ ) {
+		print $socket $EODATA;
+		print $socket "ERR Illegal characters in argument list\n";
+		return;
+	}
 
 	print "DEBUG: Stripped filer: '$filter'\n" if $PRINT_DEBUG;
 
