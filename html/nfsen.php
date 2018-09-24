@@ -39,7 +39,7 @@
 // The very first function to call
 session_start();
 
-$expected_version = "1.3.7";
+$expected_version = "1.3.8";
 
 // Session check
 if ( array_key_exists('backend_version', $_SESSION ) && $_SESSION['backend_version'] !=  $expected_version ) {

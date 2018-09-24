@@ -1,7 +1,7 @@
 Quick Notes:
 ============
 
-This is version 1.3.7 of NfSen. Use least nfdump 1.6.x,
+This is version 1.3.8 of NfSen. Use least nfdump 1.6.x,
 Do not use any earlier nfdump version, such as nfdump 1.5.x
 Make sure you have nfdump configured with option --enable-nfprofile
 

@@ -30,11 +30,11 @@
 #
 #  $Author: peter $
 #
-#  $Id: install.pl 69 2014-06-23 19:27:50Z peter $
+#  $Id: install.pl 71 2017-01-19 16:16:21Z peter $
 #
-#  $LastChangedRevision: 69 $
+#  $LastChangedRevision: 71 $
 #
-#  Last changed date:    $Date: 2014-06-23 21:27:50 +0200 (Mon, 23 Jun 2014) $
+#  Last changed date:    $Date: 2017-01-19 17:16:21 +0100 (Thu, 19 Jan 2017) $
 
 require v5.10.1;
 
@@ -55,8 +55,8 @@ use File::Copy;
 use File::Path;
 use RRDconvertv1;
 
-my $VERSION = '$Id: install.pl 69 2014-06-23 19:27:50Z peter $';
-my $nfsen_version = "1.3.7";
+my $VERSION = '$Id: install.pl 71 2017-01-19 16:16:21Z peter $';
+my $nfsen_version = "1.3.8";
 
 my @ProfileTag = ( 
 	"# \n",
