@@ -38,6 +38,7 @@ package NfSenRC;
 use strict;
 use warnings;
 use NfSen;
+use Nfsources;
 use Log;
 
 # public map for collector mappings - more may be added in future
