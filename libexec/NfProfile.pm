@@ -1187,12 +1187,14 @@ sub GetProfilegroups {
 } # End of GetProfilegroups
 
 sub DoRebuild {
+	my $socket		 = shift;
 	my $profileinfo  = shift;
 	my $profile 	 = shift;
 	my $profilegroup = shift;
 	my $profilepath  = shift;
 	my $installer	 = shift;
 	my $DoGraphs	 = shift;
+
 	# rebuilding live is a bit trickier to keep everything consistent
 	# make sure, the periodic update process is done - then block cycles
 	syslog('info', "Rebuilding profile '$profile', group '$profilegroup'");
@@ -1341,6 +1343,7 @@ sub DoRebuild {
 				$completed = 100;
 			}
 			if ( ($counter % $modulo ) == 0 ) {
+				print $socket ".info Rebuilding Profile '$profile': Completed: $completed\%\n";
 				syslog('info', "Rebuilding Profile '$profile': Completed: $completed\%");
 			}
 
@@ -2941,7 +2944,7 @@ sub RebuildProfile {
 		
 	syslog('info', "Start to rebuild profile '$profile'");
 
-	my $status = DoRebuild(\%profileinfo, $profile, $profilegroup, $profilepath, 0, $RebuildGraphs);
+	my $status = DoRebuild($socket, \%profileinfo, $profile, $profilegroup, $profilepath, 0, $RebuildGraphs);
 
 	if ( !WriteProfile(\%profileinfo) ) {
 		syslog('err', "Error writing profile '$profile': $Log::ERROR");
@@ -3438,7 +3441,7 @@ sub CheckProfiles {
 				} else {
 					$profileinfo{'type'} = 1;
 				}
-				my $status = DoRebuild(\%profileinfo, $profile, $profilegroup, $profilepath, 0, 0);
+				my $status = DoRebuild(*STDOUT, \%profileinfo, $profile, $profilegroup, $profilepath, 0, 0);
 				syslog('err', "Rebuilded profile '$profile' in group '$profilegroup': $status ");
 			}
 			if ( -f "$NfConf::PROFILESTATDIR/$profilepath/.CANCELED" ) {
@@ -3450,7 +3453,7 @@ sub CheckProfiles {
 				} else {
 					$profileinfo{'type'} = 1;
 				}
-				my $status = DoRebuild(\%profileinfo, $profile, $profilegroup, $profilepath, 0, 0);
+				my $status = DoRebuild(*STDOUT, \%profileinfo, $profile, $profilegroup, $profilepath, 0, 0);
 				syslog('err', "Rebuilded profile '$profile' in group '$profilegroup': $status ");
 			}
 			if ( $profileinfo{'locked'} ) {
